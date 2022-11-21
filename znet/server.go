@@ -8,10 +8,10 @@ import (
 )
 
 type Server struct {
-	Name      string
-	IPVersion string
-	IP        string
-	Port      int
+	Name      string // 服务器名
+	IPVersion string // tcp网络名称
+	IP        string // ip地址
+	Port      int    // 端口号
 }
 
 func (s *Server) Start() {
@@ -48,7 +48,7 @@ func (s *Server) Start() {
 					log.Printf("receive buf err = [%+v]\n", err)
 					continue
 				}
-				fmt.Println(cnt)
+				fmt.Printf("receive client buf %s, cnt %d\n", buf, cnt)
 				// 回显
 				if _, err := conn.Write(buf[:cnt]); err != nil {
 					log.Printf("write back buf err = [%+v]\n", err)
