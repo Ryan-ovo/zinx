@@ -1,6 +1,7 @@
 package znet
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -31,6 +32,7 @@ func (s *Server) Start() {
 	// 监听成功
 	log.Println("Zinx Server start success, listening...")
 	// 3. 阻塞等待客户端连接，处理客户端连接的业务
+	var connID uint32 = 0
 	for {
 		// 3.1 阻塞等待客户端建立连接请求
 		conn, err := listener.AcceptTCP()
@@ -38,28 +40,26 @@ func (s *Server) Start() {
 			log.Printf("Accept err = [%+v]\n", err)
 			continue
 		}
-		// 对于每一个客户端连接，开协程去处理业务
-		go func() {
-			for {
-				// 客户端输入的回显任务
-				buf := make([]byte, 512)
-				cnt, err := conn.Read(buf)
-				if err != nil {
-					log.Printf("receive buf err = [%+v]\n", err)
-					continue
-				}
-				fmt.Printf("receive client buf %s, cnt %d\n", buf, cnt)
-				// 回显
-				if _, err := conn.Write(buf[:cnt]); err != nil {
-					log.Printf("write back buf err = [%+v]\n", err)
-					continue
-				}
-			}
-		}()
+		zinxConn := NewConnection(conn, connID, CallBackFunc)
+		connID++
+		go zinxConn.Start()
 	}
 }
 
+// todo: 定义与当前连接绑定的handle api，当前写死
+// 回调函数可以当作签名传递给连接对象，然后连接对象可以选择在任意想调用函数的时候调用
+// 在调用之前可以做一些额外操作
+func CallBackFunc(conn *net.TCPConn, data []byte, cnt int) error {
+	log.Println("[Conn Handle] CallBackFunc execute...")
+	if _, err := conn.Write(data[:cnt]); err != nil {
+		log.Println("write back buf err = ", err)
+		return errors.New("CallBackFunc error")
+	}
+	return nil
+}
+
 func (s *Server) Stop() {
+	log.Println("[STOP] Zinx server , name = ", s.Name)
 	// todo: 将服务器的资源，状态或者一些已经开辟的链接信息进行回收或者停止
 }
 

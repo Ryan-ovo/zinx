@@ -1,0 +1,26 @@
+package ziface
+
+import "net"
+
+type IConnection interface {
+	// Start 启动连接
+	Start()
+	// Stop 停止连接
+	Stop()
+	// GetTCPConnection 获取当前连接绑定的socket
+	GetTCPConnection() *net.TCPConn
+	// GetConnID 获取连接ID
+	GetConnID() uint32
+	// RemoteAddr 获取远程客户端的连接类型，IP和端口
+	RemoteAddr() net.Addr
+	// Send 发送数据
+	Send(data []byte) error
+}
+
+/*
+	HandleFunc 抽象方法
+	1. socket连接
+	2. 客户端请求的数据
+	3. 客户端请求的数据长度
+*/
+type HandleFunc func(*net.TCPConn, []byte, int) error
