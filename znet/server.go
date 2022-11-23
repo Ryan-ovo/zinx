@@ -1,7 +1,6 @@
 package znet
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -13,6 +12,7 @@ type Server struct {
 	IPVersion string // tcp网络名称
 	IP        string // ip地址
 	Port      int    // 端口号
+	Router    ziface.IRouter
 }
 
 func (s *Server) Start() {
@@ -40,22 +40,10 @@ func (s *Server) Start() {
 			log.Printf("Accept err = [%+v]\n", err)
 			continue
 		}
-		zinxConn := NewConnection(conn, connID, CallBackFunc)
+		zinxConn := NewConnection(conn, connID, s.Router)
 		connID++
 		go zinxConn.Start()
 	}
-}
-
-// todo: 定义与当前连接绑定的handle api，当前写死
-// 回调函数可以当作签名传递给连接对象，然后连接对象可以选择在任意想调用函数的时候调用
-// 在调用之前可以做一些额外操作
-func CallBackFunc(conn *net.TCPConn, data []byte, cnt int) error {
-	log.Println("[Conn Handle] CallBackFunc execute...")
-	if _, err := conn.Write(data[:cnt]); err != nil {
-		log.Println("write back buf err = ", err)
-		return errors.New("CallBackFunc error")
-	}
-	return nil
 }
 
 func (s *Server) Stop() {
@@ -72,6 +60,11 @@ func (s *Server) Serve() {
 	select {}
 }
 
+func (s *Server) AddRouter(router ziface.IRouter) {
+	log.Println("Add Router Success!")
+	s.Router = router
+}
+
 /*
 	初始化Server的方法
 */
@@ -81,6 +74,7 @@ func NewServer(name string) ziface.IServer {
 		IPVersion: "tcp4",
 		IP:        "0.0.0.0",
 		Port:      8999,
+		Router:    nil,
 	}
 	return s
 }

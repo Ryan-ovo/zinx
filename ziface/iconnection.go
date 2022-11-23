@@ -23,4 +23,5 @@ type IConnection interface {
 	2. 客户端请求的数据
 	3. 客户端请求的数据长度
 */
-type HandleFunc func(*net.TCPConn, []byte, int) error
+// 实现router类后，这个抽象方法不需要了
+//type HandleFunc func(*net.TCPConn, []byte, int) error
