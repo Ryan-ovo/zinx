@@ -3,6 +3,7 @@ package znet
 import (
 	"log"
 	"net"
+	"zinx/utils"
 	"zinx/ziface"
 )
 
@@ -42,7 +43,7 @@ func (c *Connection) StartReader() {
 	defer c.Stop()
 
 	for {
-		buf := make([]byte, 512)
+		buf := make([]byte, utils.GlobalObject.MaxPkgSize)
 		cnt, err := c.Conn.Read(buf)
 		if err != nil {
 			log.Println("receive buf error = ", err)
