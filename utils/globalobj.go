@@ -41,5 +41,5 @@ func init() {
 		MaxConn:    1000,
 		MaxPkgSize: 4096,
 	}
-	GlobalObject.Reload()
+	//GlobalObject.Reload()
 }
