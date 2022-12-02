@@ -9,11 +9,11 @@ import (
 )
 
 type Server struct {
-	Name      string // 服务器名
-	IPVersion string // tcp网络名称
-	IP        string // ip地址
-	Port      int    // 端口号
-	Router    ziface.IRouter
+	Name       string             // 服务器名
+	IPVersion  string             // tcp网络名称
+	IP         string             // ip地址
+	Port       int                // 端口号
+	msgHandler ziface.IMsgHandler // 消息管理模块
 }
 
 func (s *Server) Start() {
@@ -43,7 +43,7 @@ func (s *Server) Start() {
 			log.Printf("Accept err = [%+v]\n", err)
 			continue
 		}
-		zinxConn := NewConnection(conn, connID, s.Router)
+		zinxConn := NewConnection(conn, connID, s.msgHandler)
 		connID++
 		go zinxConn.Start()
 	}
@@ -63,9 +63,9 @@ func (s *Server) Serve() {
 	select {}
 }
 
-func (s *Server) AddRouter(router ziface.IRouter) {
-	log.Println("Add Router Success!")
-	s.Router = router
+func (s *Server) AddRouter(msgID uint32, router ziface.IRouter) {
+	s.msgHandler.AddRouter(msgID, router)
+	log.Println("Add Router Success!, msg_id = ", msgID)
 }
 
 /*
@@ -73,11 +73,11 @@ func (s *Server) AddRouter(router ziface.IRouter) {
 */
 func NewServer() ziface.IServer {
 	s := &Server{
-		Name:      utils.GlobalObject.Name,
-		IPVersion: "tcp4",
-		IP:        utils.GlobalObject.Host,
-		Port:      utils.GlobalObject.Port,
-		Router:    nil,
+		Name:       utils.GlobalObject.Name,
+		IPVersion:  "tcp4",
+		IP:         utils.GlobalObject.Host,
+		Port:       utils.GlobalObject.Port,
+		msgHandler: NewMsgHandler(),
 	}
 	return s
 }
