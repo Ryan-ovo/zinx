@@ -22,7 +22,7 @@ type GlobalObj struct {
 }
 
 func (g *GlobalObj) Reload() {
-	data, err := os.ReadFile("zdemo/zinx_0.4/conf/zinx.json")
+	data, err := os.ReadFile("zdemo/zinx_0.6/conf/zinx.json")
 	if err != nil {
 		panic(err)
 	}
@@ -41,5 +41,5 @@ func init() {
 		MaxConn:    1000,
 		MaxPkgSize: 4096,
 	}
-	//GlobalObject.Reload()
+	GlobalObject.Reload()
 }
