@@ -41,6 +41,7 @@ func (c *Connection) StartReader() {
 	defer log.Println("connID = ", c.ConnID, ", Reader is exit, remote addr is ", c.RemoteAddr().String())
 	defer c.Stop()
 
+	var ReqID uint32
 	for {
 		// v0.5 集成拆包过程
 		dp := NewDataPack()
@@ -67,10 +68,12 @@ func (c *Connection) StartReader() {
 		}
 		msg.SetData(msgBody)
 		req := &Request{
-			conn: c,
-			msg:  msg,
+			conn:      c,
+			msg:       msg,
+			requestID: ReqID,
 		}
-		go c.MsgHandler.DoMsgHandler(req)
+		ReqID++
+		c.MsgHandler.SendMsgToTaskQueue(req)
 	}
 }
 

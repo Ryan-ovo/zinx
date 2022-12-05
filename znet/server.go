@@ -17,6 +17,8 @@ type Server struct {
 }
 
 func (s *Server) Start() {
+	// 启动工作池
+	s.msgHandler.StartWorkerPool()
 	log.Printf("[Zinx] Server name = [%+v], listen at ip = [%+v], port = [%+v]\n", utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.Port)
 	log.Printf("[Zinx] Version = [%+v], MaxConn = [%+v], MaxPkgSize = [%+v]\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPkgSize)
 	log.Printf("[Start] Server Listener at IP: %s, Port: %d, is starting\n", s.IP, s.Port)

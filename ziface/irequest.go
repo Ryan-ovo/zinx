@@ -10,4 +10,6 @@ type IRequest interface {
 	GetData() []byte
 	// GetMsgID 获取请求的ID
 	GetMsgID() uint32
+	// GetRequestID 获取Request实体的ID，用于分配worker
+	GetRequestID() uint32
 }

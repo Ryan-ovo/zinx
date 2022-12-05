@@ -22,7 +22,7 @@ func main() {
 	for {
 		// 发送封包之后的消息
 		dp := znet.NewDataPack()
-		binaryMsg, err := dp.Pack(znet.NewMessage(2, []byte("Zinx V0.6 Client1 Test Message")))
+		binaryMsg, err := dp.Pack(znet.NewMessage(2, []byte("Zinx V0.7 Client1 Test Message")))
 		if err != nil {
 			log.Println("pack error = ", err)
 			return

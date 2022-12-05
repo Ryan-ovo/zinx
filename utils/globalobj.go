@@ -16,13 +16,15 @@ type GlobalObj struct {
 	Port      int            // 端口号
 	Name      string         // 服务器名
 	// zinx相关
-	Version    string // zinx版本号
-	MaxConn    int    // 最大连接数
-	MaxPkgSize uint32 //数据包的最大值
+	Version           string // zinx版本号
+	MaxConn           int    // 最大连接数
+	MaxPkgSize        uint32 //数据包的最大值
+	WorkerPoolSize    uint32 // 工作池的最大线程数
+	MaxWorkerPoolSize uint32 // 允许配置的工作池最大线程数
 }
 
 func (g *GlobalObj) Reload() {
-	data, err := os.ReadFile("zdemo/zinx_0.7/conf/zinx.json")
+	data, err := os.ReadFile("zdemo/zinx_0.8/conf/zinx.json")
 	if err != nil {
 		panic(err)
 	}
@@ -34,12 +36,14 @@ func (g *GlobalObj) Reload() {
 
 func init() {
 	GlobalObject = &GlobalObj{
-		Host:       "0.0.0.0",
-		Port:       8999,
-		Name:       "ZinxServerApp",
-		Version:    "v0.4",
-		MaxConn:    1000,
-		MaxPkgSize: 4096,
+		Host:              "0.0.0.0",
+		Port:              8999,
+		Name:              "ZinxServerApp",
+		Version:           "v0.4",
+		MaxConn:           1000,
+		MaxPkgSize:        4096,
+		WorkerPoolSize:    10,
+		MaxWorkerPoolSize: 1024,
 	}
 	GlobalObject.Reload()
 }
