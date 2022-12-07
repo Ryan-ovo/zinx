@@ -20,7 +20,7 @@ type GlobalObj struct {
 	MaxConn           int    // 最大连接数
 	MaxPkgSize        uint32 //数据包的最大值
 	WorkerPoolSize    uint32 // 工作池的最大线程数
-	MaxWorkerPoolSize uint32 // 允许配置的工作池最大线程数
+	MaxWorkerTaskSize uint32 // 每个协程允许排队的最大任务数
 }
 
 func (g *GlobalObj) Reload() {
@@ -43,7 +43,7 @@ func init() {
 		MaxConn:           1000,
 		MaxPkgSize:        4096,
 		WorkerPoolSize:    10,
-		MaxWorkerPoolSize: 1024,
+		MaxWorkerTaskSize: 1024,
 	}
 	GlobalObject.Reload()
 }

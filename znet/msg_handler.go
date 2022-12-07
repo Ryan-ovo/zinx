@@ -7,9 +7,9 @@ import (
 )
 
 type MsgHandler struct {
-	APIs           map[uint32]ziface.IRouter
-	WorkerPoolSize uint32
-	TaskQueue      []chan ziface.IRequest
+	APIs           map[uint32]ziface.IRouter // 每个MsgID对应的业务处理方法
+	WorkerPoolSize uint32                    // 业务Worker池的协程数量
+	TaskQueue      []chan ziface.IRequest    // 每个Worker对应的消息队列
 }
 
 func NewMsgHandler() *MsgHandler {
@@ -43,7 +43,7 @@ func (m *MsgHandler) AddRouter(msgID uint32, router ziface.IRouter) {
 
 func (m *MsgHandler) StartWorkerPool() {
 	for i := 0; i < int(m.WorkerPoolSize); i++ {
-		m.TaskQueue[i] = make(chan ziface.IRequest)
+		m.TaskQueue[i] = make(chan ziface.IRequest, utils.GlobalObject.MaxWorkerTaskSize)
 		go m.StartOneWorker(i, m.TaskQueue[i])
 	}
 }
