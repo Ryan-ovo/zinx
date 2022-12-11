@@ -9,6 +9,7 @@ import (
 )
 
 type Connection struct {
+	TcpServer  ziface.IServer     // 连接隶属的服务器
 	Conn       *net.TCPConn       // 当前连接的 socket
 	ConnID     uint32             // 连接ID
 	isClosed   bool               // 当前的连接状态
@@ -17,8 +18,9 @@ type Connection struct {
 	msgChan    chan []byte        // 读写协程之间的通信
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandler) *Connection {
-	return &Connection{
+func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandler) *Connection {
+	c := &Connection{
+		TcpServer:  server,
 		Conn:       conn,
 		ConnID:     connID,
 		isClosed:   false,
@@ -26,6 +28,8 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandl
 		MsgHandler: msgHandler,
 		msgChan:    make(chan []byte),
 	}
+	c.TcpServer.GetConnManager().Add(c)
+	return c
 }
 
 func (c *Connection) Start() {
@@ -34,6 +38,8 @@ func (c *Connection) Start() {
 	go c.StartReader()
 	// 启动从当前连接写数据到客户端的业务
 	go c.StartWriter()
+	// 调用钩子函数
+	c.TcpServer.CallAfterConnStart(c)
 }
 
 func (c *Connection) StartReader() {
@@ -106,6 +112,12 @@ func (c *Connection) Stop() {
 	_ = c.Conn.Close()
 	// 通知writer关闭
 	c.ExitChan <- true
+
+	// 调用连接关闭前的钩子函数
+	c.TcpServer.CallBeforeConnStop(c)
+
+	// 删除连接
+	c.TcpServer.GetConnManager().Remove(c)
 
 	// 关闭相关通道
 	close(c.ExitChan)

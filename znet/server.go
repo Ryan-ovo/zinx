@@ -9,11 +9,14 @@ import (
 )
 
 type Server struct {
-	Name       string             // 服务器名
-	IPVersion  string             // tcp网络名称
-	IP         string             // ip地址
-	Port       int                // 端口号
-	msgHandler ziface.IMsgHandler // 消息管理模块
+	Name               string                        // 服务器名
+	IPVersion          string                        // tcp网络名称
+	IP                 string                        // ip地址
+	Port               int                           // 端口号
+	msgHandler         ziface.IMsgHandler            // 消息管理模块
+	ConnMgr            ziface.IConnManager           // 连接管理器
+	AfterConnStartFunc func(conn ziface.IConnection) // 连接启动之后调用的钩子函数
+	BeforeConnStopFunc func(conn ziface.IConnection) // 连接关闭之后调用的钩子函数
 }
 
 func (s *Server) Start() {
@@ -45,7 +48,16 @@ func (s *Server) Start() {
 			log.Printf("Accept err = [%+v]\n", err)
 			continue
 		}
-		zinxConn := NewConnection(conn, connID, s.msgHandler)
+		// 3.2 最大连接数控制
+		log.Println(">>>>>> ConnMgr Len = ", s.ConnMgr.Len(), ", MAX = ", utils.GlobalObject.MaxConn)
+		if s.ConnMgr.Len() >= utils.GlobalObject.MaxConn {
+			log.Printf("conn num exceed limit, MaxConnSize = [%d]\n", utils.GlobalObject.MaxConn)
+			if err = conn.Close(); err != nil {
+				log.Printf("conn close error = [%+v]\n", err)
+			}
+			continue
+		}
+		zinxConn := NewConnection(s, conn, connID, s.msgHandler)
 		connID++
 		go zinxConn.Start()
 	}
@@ -54,6 +66,7 @@ func (s *Server) Start() {
 func (s *Server) Stop() {
 	log.Println("[STOP] Zinx server , name = ", s.Name)
 	// todo: 将服务器的资源，状态或者一些已经开辟的链接信息进行回收或者停止
+	s.ConnMgr.ClearConn()
 }
 
 func (s *Server) Serve() {
@@ -70,6 +83,10 @@ func (s *Server) AddRouter(msgID uint32, router ziface.IRouter) {
 	log.Println("Add Router Success!, msg_id = ", msgID)
 }
 
+func (s *Server) GetConnManager() ziface.IConnManager {
+	return s.ConnMgr
+}
+
 /*
 	初始化Server的方法
 */
@@ -80,6 +97,27 @@ func NewServer() ziface.IServer {
 		IP:         utils.GlobalObject.Host,
 		Port:       utils.GlobalObject.Port,
 		msgHandler: NewMsgHandler(),
+		ConnMgr:    NewConnManager(),
 	}
 	return s
+}
+
+func (s *Server) SetAfterConnStart(do func(conn ziface.IConnection)) {
+	s.AfterConnStartFunc = do
+}
+
+func (s *Server) SetBeforeConnStop(do func(conn ziface.IConnection)) {
+	s.BeforeConnStopFunc = do
+}
+
+func (s *Server) CallAfterConnStart(conn ziface.IConnection) {
+	if s.AfterConnStartFunc != nil {
+		s.AfterConnStartFunc(conn)
+	}
+}
+
+func (s *Server) CallBeforeConnStop(conn ziface.IConnection) {
+	if s.BeforeConnStopFunc != nil {
+		s.BeforeConnStopFunc(conn)
+	}
 }
