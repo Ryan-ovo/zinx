@@ -15,6 +15,12 @@ type IConnection interface {
 	RemoteAddr() net.Addr
 	// SendMsg 发送封包后的数据
 	SendMsg(msgID uint32, data []byte) error
+	// SetProperty 设置连接属性
+	SetProperty(key string, value interface{})
+	// GetProperty 获取连接属性
+	GetProperty(key string) (interface{}, error)
+	// RemoveProperty 移除连接属性
+	RemoveProperty(key string)
 }
 
 /*

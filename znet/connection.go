@@ -5,17 +5,20 @@ import (
 	"io"
 	"log"
 	"net"
+	"sync"
 	"zinx/ziface"
 )
 
 type Connection struct {
-	TcpServer  ziface.IServer     // 连接隶属的服务器
-	Conn       *net.TCPConn       // 当前连接的 socket
-	ConnID     uint32             // 连接ID
-	isClosed   bool               // 当前的连接状态
-	ExitChan   chan bool          // 通知当前连接停止的 channel
-	MsgHandler ziface.IMsgHandler // 消息管理模块
-	msgChan    chan []byte        // 读写协程之间的通信
+	TcpServer    ziface.IServer         // 连接隶属的服务器
+	Conn         *net.TCPConn           // 当前连接的 socket
+	ConnID       uint32                 // 连接ID
+	isClosed     bool                   // 当前的连接状态
+	ExitChan     chan bool              // 通知当前连接停止的 channel
+	MsgHandler   ziface.IMsgHandler     // 消息管理模块
+	msgChan      chan []byte            // 读写协程之间的通信
+	property     map[string]interface{} // 连接属性
+	propertyLock sync.RWMutex           // 保护连接属性读写的锁
 }
 
 func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandler) *Connection {
@@ -27,6 +30,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 		ExitChan:   make(chan bool, 1),
 		MsgHandler: msgHandler,
 		msgChan:    make(chan []byte),
+		property:   make(map[string]interface{}),
 	}
 	c.TcpServer.GetConnManager().Add(c)
 	return c
@@ -147,4 +151,25 @@ func (c *Connection) SendMsg(msgID uint32, data []byte) error {
 	}
 	c.msgChan <- msg
 	return nil
+}
+
+func (c *Connection) SetProperty(key string, value interface{}) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+	c.property[key] = value
+}
+
+func (c *Connection) GetProperty(key string) (interface{}, error) {
+	c.propertyLock.RLock()
+	defer c.propertyLock.RUnlock()
+	if value, ok := c.property[key]; ok {
+		return value, nil
+	}
+	return nil, errors.New("property not found")
+}
+
+func (c *Connection) RemoveProperty(key string) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+	delete(c.property, key)
 }
